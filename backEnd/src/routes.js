@@ -1,6 +1,21 @@
 const express = require('express')
+const { check, validationResult } = require('express-validator')
 const toDoList = require('./db/modules/toDoList')
+
 const routes = express.Router()
+
+const validaToDoList = [
+    check('titulo', 'O titulo é obrigatório')
+        .not()
+        .isEmpty(),
+    check('dataCriacao', 'A data de criação é obrigatória')
+        .not()
+        .isEmpty(),
+    check('concluido', 'Só true/1 ou false/0')
+        .not()
+        .isEmpty()
+        .isBoolean(),
+]
 
 routes.get('/', (req, res) => {
     res.status(200).json({
@@ -13,6 +28,11 @@ routes.get('/', (req, res) => {
 routes.get('/toDoList/list', async (req, res) => {
     try {
         const afazeres = await toDoList.find()
+        if (afazeres == 0) {
+            return res.status(400).send({
+                    message: 'Não há nenhum afazer para listar'
+            })
+        }
         res.json(afazeres)
     } catch (error) {
         res.status(500).send({
@@ -22,20 +42,34 @@ routes.get('/toDoList/list', async (req, res) => {
 })
 
 //Cria um afazer
-routes.post('/toDoList/create', async (req, res) => {
+routes.post('/toDoList/create', validaToDoList, async (req, res) => {
+    const errors = validationResult(req)
+    if (!errors.isEmpty()) {
+        return res.status(400).json({
+            errors: errors.array()
+        })
+    }
     try {
         const afazeres = new toDoList(req.body)
         await afazeres.save()
         res.send(afazeres)
     } catch (error) {
         return res.status(500).json({
-            errors: [{ message: `Erro ao criar a lista de afazeres: ${error.message}` }]
+            errors: [{
+                message: `Erro ao criar a lista de afazeres: ${error.message}`
+            }]
         })
     }
 })
 
 //Atualiza um afazer
-routes.post('/toDoList/update/:id', async (req, res) => {
+routes.post('/toDoList/update/:id', validaToDoList, async (req, res) => {
+    const errors = validationResult(req)
+    if (!errors.isEmpty()) {
+        return res.status(400).json({
+            errors: errors.array()
+        })
+    }
     try {
         const dados = req.body
         await toDoList.findByIdAndUpdate(req.params.id, { $set: dados }, { new: true })
@@ -46,7 +80,9 @@ routes.post('/toDoList/update/:id', async (req, res) => {
             })
     } catch (error) {
         return res.status(500).json({
-            errors: [{ message: `Erro na edição do afazer, erro: ${error.message}` }]
+            errors: [{
+                message: `Erro na edição do afazer, erro: ${error.message}`
+            }]
         })
     }
 })
@@ -70,7 +106,9 @@ routes.delete('/toDoList/delete/:id', async (req, res) => {
         }
     } catch (error) {
         return res.status(500).json({
-            errors: [{ message: `Erro ao deletar o afazer, erro: ${error.message}` }]
+            errors: [{
+                message: `Erro ao deletar o afazer, error: ${error.message}`
+            }]
         })
     }
 })
