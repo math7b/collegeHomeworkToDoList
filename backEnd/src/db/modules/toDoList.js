@@ -5,11 +5,19 @@ const toDoListSchema = new mongoose.Schema({
         type: String,
         required: true
     },
+    subTitulo: {
+        type: String,
+        required: false
+    },
     descricao:{
         type: String,
         required: false
     },
     dataCriacao:{
+        type: String,
+        required: true
+    },
+    dataAlteracao:{
         type: String,
         required: true
     },

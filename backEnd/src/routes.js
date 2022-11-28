@@ -11,12 +11,16 @@ const validaToDoList = [
     check('dataCriacao', 'A data de criação é obrigatória')
         .not()
         .isEmpty(),
+    check('dataAlteracao', 'A data de alteração é obrigatória')
+        .not()
+        .isEmpty(),
     check('concluido', 'Só true/1 ou false/0')
         .not()
         .isEmpty()
         .isBoolean(),
 ]
 
+//Inicio da API
 routes.get('/', (req, res) => {
     res.status(200).json({
         message: 'API Fatec Mobile 100% funcional🖐',
@@ -25,14 +29,9 @@ routes.get('/', (req, res) => {
 })
 
 //List todos os afazeres
-routes.get('/toDoList/list', async (req, res) => {
+routes.get('/toDoList/listar', async (req, res) => {
     try {
         const afazeres = await toDoList.find()
-        if (afazeres == 0) {
-            return res.status(400).send({
-                    message: 'Não há nenhum afazer para listar'
-            })
-        }
         res.json(afazeres)
     } catch (error) {
         res.status(500).send({
@@ -41,8 +40,20 @@ routes.get('/toDoList/list', async (req, res) => {
     }
 })
 
+//Lista um afazer
+routes.get('/toDoList/:id', async (req, res) => {
+    try {
+        const afazer = await toDoList.findById(req.params.id)
+        res.json(afazer)
+    } catch (error) {
+        res.status(500).send({
+            errors: [{ message: 'Não foi possivel encontrar as listas de afazeres' }]
+        })
+    }
+})
+
 //Cria um afazer
-routes.post('/toDoList/create', validaToDoList, async (req, res) => {
+routes.post('/toDoList/criar', validaToDoList, async (req, res) => {
     const errors = validationResult(req)
     if (!errors.isEmpty()) {
         return res.status(400).json({
@@ -63,7 +74,7 @@ routes.post('/toDoList/create', validaToDoList, async (req, res) => {
 })
 
 //Atualiza um afazer
-routes.post('/toDoList/update/:id', validaToDoList, async (req, res) => {
+routes.post('/toDoList/atualizar/:id', validaToDoList, async (req, res) => {
     const errors = validationResult(req)
     if (!errors.isEmpty()) {
         return res.status(400).json({
@@ -87,7 +98,8 @@ routes.post('/toDoList/update/:id', validaToDoList, async (req, res) => {
     }
 })
 
-routes.delete('/toDoList/delete/:id', async (req, res) => {
+//Deleta um afazer
+routes.delete('/toDoList/deletar/:id', async (req, res) => {
     try {
         const checkId = await toDoList.findById(req.params.id)
         if (checkId !== null) {
